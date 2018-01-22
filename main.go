@@ -10,8 +10,7 @@ import (
 
 	"github.com/aporeto-inc/trireme-example/configuration"
 	"github.com/aporeto-inc/trireme-example/triremecli"
-	"github.com/aporeto-inc/trireme-example/versions"
-	trireme "github.com/aporeto-inc/trireme-lib"
+	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -103,25 +102,25 @@ func setLogs(logFormat, logLevel string) error {
 }
 
 func main() {
-	config, err := configuration.LoadConfig()
+	var err error
+	var app *cobra.Command
+
+	// initialize the CLI
+	app = configuration.InitCLI(
+		triremecli.ProcessRun,
+		triremecli.ProcessRun,
+		triremecli.ProcessRun,
+		triremecli.ProcessEnforce,
+		triremecli.ProcessDaemon,
+		setLogs,
+		func() {
+			banner("14", "20")
+		},
+	)
+
+	// now run the app
+	err = app.Execute()
 	if err != nil {
-		log.Fatalf("Error loading config: %s", err)
+		log.Fatalf("runtime error: %s", err.Error())
 	}
-
-	if config.Enforce {
-		_, _, config.LogLevel, config.LogFormat = trireme.GetLogParameters()
-	}
-
-	err = setLogs(config.LogFormat, config.LogLevel)
-	if err != nil {
-		log.Fatalf("Error setting up logs: %s", err)
-	}
-
-	if !config.Enforce && !config.Run {
-		banner("14", "20")
-		zap.L().Info("Current configuration", config.Fields()...)
-		zap.L().Info("Current libraties versions", versions.Fields()...)
-	}
-
-	triremecli.ProcessArgs(config)
 }

@@ -38,4 +38,4 @@ docker_push: docker_build
 
 clean:
 	rm -rf vendor
-	rm -rf docker/trireme-example 
+	rm -rf docker/trireme-example
