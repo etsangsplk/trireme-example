@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aporeto-inc/trireme-lib/constants"
+	"github.com/aporeto-inc/trireme-lib/common"
 	"github.com/aporeto-inc/trireme-lib/policy"
 	"github.com/docker/docker/api/types"
 )
@@ -61,5 +61,5 @@ func exampleExternalDockerMetadataExtractor(info *types.ContainerJSON) (*policy.
 		"bridge": info.NetworkSettings.IPAddress,
 	}
 
-	return policy.NewPURuntime(info.Name, info.State.Pid, "", tagsMap, ipa, constants.ContainerPU, nil), nil
+	return policy.NewPURuntime(info.Name, info.State.Pid, "", tagsMap, ipa, common.ContainerPU, nil), nil
 }

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/aporeto-inc/trireme-example/versions"
-	trireme "github.com/aporeto-inc/trireme-lib"
+	"github.com/aporeto-inc/trireme-lib/controller"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -28,7 +28,7 @@ const (
 const ProductName = "trireme-example"
 
 // TriremeEnvPrefix is the prefix used to provide configuration through env variables.
-const TriremeEnvPrefix = "TRIREME"
+const TriremeEnvPrefix = "TRIREME_EXAMPLE"
 
 // Configuration holds the whole configuration for Trireme-Example
 type Configuration struct {
@@ -97,7 +97,6 @@ const Usage = `trireme-example -h | --help
     [--target-networks=<networks>...]
     [--policy=<policyFile>]
     [--usePKI]
-    [--hybrid|--remote|--local]
     [--swarm|--extractor <metadatafile>]
     [--keyFile=<keyFile>]
     [--certFile=<certFile>]
@@ -157,7 +156,7 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 	// 3. setup environment variables
 	viper.SetEnvPrefix(TriremeEnvPrefix)
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	// TODO: we probably need to declar them all manually to match all the
+	// TODO: we probably need to declare them all manually to match all the
 	//       the variables from docopts
 	viper.AutomaticEnv()
 
@@ -243,7 +242,7 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 	fRmServiceName = cmdRm.Flags().String("service-name", "", "The name of the service to be removed from Trireme")
 
 	// 3. daemon command
-	var fUsePKI, fLocal *bool
+	var fUsePKI *bool
 	cmdDaemon := &cobra.Command{
 		Use:   "daemon [ OPTIONS ]",
 		Short: "Starts the Trireme daemon",
@@ -252,9 +251,6 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 		PreRun: func(cmd *cobra.Command, args []string) {
 			if fUsePKI != nil && *fUsePKI {
 				config.Auth = PKI
-			}
-			if fLocal != nil && *fLocal {
-				config.RemoteEnforcer = false
 			}
 
 			// print configuration if in debug
@@ -273,10 +269,6 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 	cmdDaemon.Flags().StringSlice("target-networks", nil, "The target networks that Trireme should apply authentication")
 	cmdDaemon.Flags().String("policy", "", "Policy file")
 	fUsePKI = cmdDaemon.Flags().Bool("usePKI", false, "Use PKI for Trireme")
-	cmdDaemon.Flags().Bool("hybrid", false, "Hybrid mode of deployment (docker+processes)")
-	fLocal = cmdDaemon.Flags().Bool("local", false, "Local mode of deployment")
-	// TODO: looks superfluous
-	cmdDaemon.Flags().Bool("remote", false, "Remote mode of deployment")
 	cmdDaemon.Flags().Bool("swarm", false, "Deploy Docker Swarm metadata extractor")
 	cmdDaemon.Flags().String("extractor", "", "External metadata extractor")
 	cmdDaemon.Flags().String("certFile", "", "Certificate file")
@@ -289,7 +281,6 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 	viper.BindPFlag("KeyPath", cmdDaemon.Flags().Lookup("keyFile"))
 	viper.BindPFlag("CaCertPath", cmdDaemon.Flags().Lookup("caCertFile"))
 	viper.BindPFlag("CaKeyPath", cmdDaemon.Flags().Lookup("caKeyFile"))
-	viper.BindPFlag("LinuxProcessesEnforcement", cmdDaemon.Flags().Lookup("hybrid"))
 	viper.BindPFlag("SwarmMode", cmdDaemon.Flags().Lookup("swarm"))
 	viper.BindPFlag("CustomExtractor", cmdDaemon.Flags().Lookup("extractor"))
 
@@ -304,7 +295,7 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 			config.Enforce = true
 
 			// the remote enforcer needs to determine its logging parameters first
-			_, _, config.LogLevel, config.LogFormat = trireme.GetLogParameters()
+			_, _, config.LogLevel, config.LogFormat = controller.GetLogParameters()
 
 			// we then apply a different log level if this was requested
 			if fLogLevelRemote != nil && len(*fLogLevelRemote) > 0 {
@@ -415,7 +406,7 @@ func setupTriremeSubProcessArgs(config *Configuration) {
 	logToConsole := true
 	logWithID := false
 
-	trireme.SetLogParameters(logToConsole, logWithID, config.LogLevel, config.LogFormat)
+	controller.SetLogParameters(logToConsole, logWithID, config.LogLevel, config.LogFormat)
 }
 
 // unsetEnvVar unsets all env variables with a specific prefix.

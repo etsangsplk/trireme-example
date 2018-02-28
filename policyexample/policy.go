@@ -1,14 +1,16 @@
 package policyexample
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
-	trireme "github.com/aporeto-inc/trireme-lib"
+	"github.com/aporeto-inc/trireme-lib/common"
+	"github.com/aporeto-inc/trireme-lib/controller"
 	"github.com/aporeto-inc/trireme-lib/policy"
-	"github.com/aporeto-inc/trireme-lib/rpc/events"
 	"go.uber.org/zap"
 )
 
@@ -16,13 +18,15 @@ import (
 type CustomPolicyResolver struct {
 	triremeNets []string
 	policies    map[string]*CachedPolicy
+	controller  controller.TriremeController
 }
 
 // CachedPolicy is a policy for a single container as read by a file
 type CachedPolicy struct {
 	ApplicationACLs *policy.IPRuleList
 	NetworkACLs     *policy.IPRuleList
-	TagSelectors    policy.TagSelectorList
+	Dependencies    policy.TagSelectorList
+	ExposureRules   policy.TagSelectorList
 }
 
 // LoadPolicies loads a set of policies defined in a JSON file
@@ -32,7 +36,8 @@ func LoadPolicies(file string) map[string]*CachedPolicy {
 	defaultConfig := &CachedPolicy{
 		ApplicationACLs: &policy.IPRuleList{},
 		NetworkACLs:     &policy.IPRuleList{},
-		TagSelectors:    policy.TagSelectorList{},
+		Dependencies:    policy.TagSelectorList{},
+		ExposureRules:   policy.TagSelectorList{},
 	}
 
 	configFile, err := os.Open(file)
@@ -66,7 +71,6 @@ func GetPolicyIndex(runtimeInfo policy.RuntimeReader) (string, error) {
 	tags := runtimeInfo.Tags()
 
 	for _, tag := range tags.GetSlice() {
-
 		parts := strings.SplitN(tag, "=", 2)
 		if strings.HasPrefix(parts[0], "@usr:PolicyIndex") {
 			zap.L().Info("Using policy from file", zap.String("Policy ID", parts[1]))
@@ -78,23 +82,23 @@ func GetPolicyIndex(runtimeInfo policy.RuntimeReader) (string, error) {
 }
 
 // NewCustomPolicyResolver creates a new example policy engine for the Trireme package
-func NewCustomPolicyResolver(networks []string, policyFile string) *CustomPolicyResolver {
+func NewCustomPolicyResolver(controller controller.TriremeController, networks []string, policyFile string) *CustomPolicyResolver {
 
 	policies := LoadPolicies(policyFile)
 
 	return &CustomPolicyResolver{
 		triremeNets: networks,
 		policies:    policies,
+		controller:  controller,
 	}
 }
 
-// ResolvePolicy implements the Trireme interface. Here we just create a simple
-// policy that accepts packets with the same labels as the target container.
-// We also add some egress/ingress services
-func (p *CustomPolicyResolver) ResolvePolicy(context string, runtimeInfo policy.RuntimeReader) (*policy.PUPolicy, error) {
+// HandlePUEvent implements the Trireme Policy interface. Once policy is resolved
+// the resolver must call the controller to enforce the policy.
+func (p *CustomPolicyResolver) HandlePUEvent(ctx context.Context, puID string, event common.Event, runtimeInfo policy.RuntimeReader) error {
 
-	zap.L().Info("Getting Policy for ContainerID",
-		zap.String("containerID", context),
+	zap.L().Info("Resolving policy for container",
+		zap.String("containerID", puID),
 		zap.String("name", runtimeInfo.Name()),
 	)
 
@@ -107,46 +111,45 @@ func (p *CustomPolicyResolver) ResolvePolicy(context string, runtimeInfo policy.
 	puPolicy, ok := p.policies[policyIndex]
 	if !ok {
 		fmt.Println("I didn't find it in the cache ")
-		return nil, fmt.Errorf("No policy found")
+		return fmt.Errorf("No policy found")
 	}
 
-	tagSelectors := puPolicy.TagSelectors
 	// For the default policy we accept traffic with the same labels
 	if policyIndex == "default" {
-		tagSelectors = p.createDefaultRules(runtimeInfo)
+		puPolicy.Dependencies = p.createDefaultRules(runtimeInfo)
+		puPolicy.ExposureRules = puPolicy.Dependencies
 	}
 
 	// Use the bridge IP from Docker.
 	ipl := policy.ExtendedMap{}
-	if ip, ok := runtimeInfo.DefaultIPAddress(); ok {
-		ipl[policy.DefaultNamespace] = ip
-	}
 
-	identity := runtimeInfo.Tags()
-
-	annotations := runtimeInfo.Tags()
-
-	excluded := []string{}
-
-	containerPolicyInfo := policy.NewPUPolicy(context, policy.Police, *puPolicy.ApplicationACLs, *puPolicy.NetworkACLs, nil, tagSelectors, identity, annotations, ipl, p.triremeNets, excluded, nil)
-
-	return containerPolicyInfo, nil
-}
-
-// HandlePUEvent implements the corresponding interface. We have no
-// state in this example
-func (p *CustomPolicyResolver) HandlePUEvent(context string, eventType events.Event) {
-
-	zap.L().Info("Handling container event",
-		zap.String("containerID", context),
-		zap.String("event", string(eventType)),
+	containerPolicyInfo := policy.NewPUPolicy(
+		puID,
+		policy.Police,
+		*puPolicy.ApplicationACLs,
+		*puPolicy.NetworkACLs,
+		puPolicy.Dependencies,
+		puPolicy.ExposureRules,
+		runtimeInfo.Tags(),
+		runtimeInfo.Tags(),
+		ipl,
+		p.triremeNets,
+		[]string{},
+		nil,
 	)
-}
 
-// SetPolicyUpdater is used in order to register a pointer to the policyUpdater
-// We don't implement policy updates in this example
-func (p *CustomPolicyResolver) SetPolicyUpdater(pu trireme.PolicyUpdater) error {
-	return nil
+	switch event {
+	case common.EventStart:
+		return p.controller.Enforce(ctx, puID, containerPolicyInfo, runtimeInfo.(*policy.PURuntime))
+	case common.EventPause:
+		return p.controller.UnEnforce(ctx, puID, containerPolicyInfo, runtimeInfo.(*policy.PURuntime))
+	case common.EventUnpause:
+		return p.controller.Enforce(ctx, puID, containerPolicyInfo, runtimeInfo.(*policy.PURuntime))
+	case common.EventStop:
+		return p.controller.UnEnforce(ctx, puID, containerPolicyInfo, runtimeInfo.(*policy.PURuntime))
+	default:
+		return nil
+	}
 }
 
 // CreateRuleDB creates a simple Rule DB that accepts packets from
@@ -158,29 +161,24 @@ func (p *CustomPolicyResolver) createDefaultRules(runtimeInfo policy.RuntimeRead
 
 	tags := runtimeInfo.Tags()
 
+	i := 0
+
 	for _, tag := range tags.GetSlice() {
-
 		parts := strings.SplitN(tag, "=", 2)
-
-		if !strings.HasPrefix(parts[0], "@usr") {
-			continue
-		}
-
 		kv := policy.KeyValueOperator{
 			Key:      parts[0],
 			Value:    []string{parts[1]},
 			Operator: policy.Equal,
 		}
-
 		tagSelector := policy.TagSelector{
 			Clause: []policy.KeyValueOperator{kv},
 			Policy: &policy.FlowPolicy{
 				Action:   policy.Accept,
-				PolicyID: "8",
+				PolicyID: strconv.Itoa(i),
 			},
 		}
 		selectorList = append(selectorList, tagSelector)
-
+		i++
 	}
 
 	// Add a default deny policy that rejects always from "namespace=bad"
@@ -189,17 +187,15 @@ func (p *CustomPolicyResolver) createDefaultRules(runtimeInfo policy.RuntimeRead
 		Value:    []string{"bad"},
 		Operator: policy.Equal,
 	}
-
 	tagSelector := policy.TagSelector{
 		Clause: []policy.KeyValueOperator{kv},
 		Policy: &policy.FlowPolicy{
 			Action:   policy.Reject,
-			PolicyID: "9",
+			PolicyID: strconv.Itoa(i),
 		},
 	}
 
 	selectorList = append(selectorList, tagSelector)
-
 	for i, selector := range selectorList {
 		for j, clause := range selector.Clause {
 			zap.L().Info("Trireme policy for container",
@@ -214,7 +210,7 @@ func (p *CustomPolicyResolver) createDefaultRules(runtimeInfo policy.RuntimeRead
 
 	zap.L().Info("Trireme tags for container",
 		zap.String("name", runtimeInfo.Name()),
-		zap.String("selector", fmt.Sprintf("%#v", runtimeInfo.Tags())),
+		zap.String("tags", fmt.Sprintf("%#v", runtimeInfo.Tags())),
 	)
 
 	return selectorList

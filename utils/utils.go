@@ -4,8 +4,8 @@ import (
 	"encoding/pem"
 	"io/ioutil"
 
-	"github.com/aporeto-inc/trireme-lib/enforcer/utils/pkiverifier"
-	"github.com/aporeto-inc/trireme-lib/enforcer/utils/secrets"
+	"github.com/aporeto-inc/trireme-lib/controller/pkg/pkiverifier"
+	"github.com/aporeto-inc/trireme-lib/controller/pkg/secrets"
 	"github.com/aporeto-inc/trireme-lib/utils/crypto"
 	"go.uber.org/zap"
 )

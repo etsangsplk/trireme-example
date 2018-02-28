@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aporeto-inc/trireme-lib/constants"
+	"github.com/aporeto-inc/trireme-lib/common"
 	"github.com/aporeto-inc/trireme-lib/policy"
 	"github.com/docker/docker/api/types"
 
@@ -29,7 +29,7 @@ func SwarmExtractor(info *types.ContainerJSON) (*policy.PURuntime, error) {
 
 		serviceID := info.Config.Labels["com.docker.swarm.service.id"]
 
-		service, _, err := cli.ServiceInspectWithRaw(context.Background(), serviceID)
+		service, _, err := cli.ServiceInspectWithRaw(context.Background(), serviceID, types.ServiceInspectOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("Failed get swarm labels: %s", err)
 		}
@@ -51,5 +51,5 @@ func SwarmExtractor(info *types.ContainerJSON) (*policy.PURuntime, error) {
 		"bridge": "0.0.0.0/0",
 	}
 
-	return policy.NewPURuntime(info.Name, info.State.Pid, "", tags, ipa, constants.ContainerPU, nil), nil
+	return policy.NewPURuntime(info.Name, info.State.Pid, "", tags, ipa, common.ContainerPU, nil), nil
 }

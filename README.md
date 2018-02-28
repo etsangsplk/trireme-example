@@ -11,6 +11,35 @@ with a more complex policy system. We demonstrate that by allowing Trireme to
 load a policy configuration through a JSON file. An example of such policy
 can be found the policy.json file.
 
+## Policy Management
+The default policy management example illustrates the power the of mutual authorization, that 
+enables flexible policy definitions without the need of quadratic number of policies. 
+
+The model is actually very simple. For each application, a developer can define its dependencies
+(i.e. which other types of applications or services does his application depend on). This is 
+information that any developer has, since when they are building the application they know
+which other services they consume. 
+
+From an operatios and security perspective, the operatios team can define exposure rules 
+that define which entities can consume a particular service. These consumption rules
+can limit for example that a given service is only exposed to a development environment
+and a different services is only exposed to a production environment. 
+
+The benefit of this approach is that the operator does not need to understand all the dependencies
+of the applications and the developer does not need to understand all the limitations of
+the environment. Policies are bound automatically to applications based on the requirements
+of both entities. 
+
+The file [profile.json] presents an example of such policy definitions. 
+
+## Peristency and recovery from restarts 
+The current example does not support persistency since the trireme-lib is now 
+stateless. Maintaining state of processes that are active and later reimplementing 
+policy in case  the trireme-example daemon restarts must be implemented in the policy engine. 
+Although it works for the case of docker, since docker itself maintains persistent 
+state for the active containers, it will not work for the Linux processes 
+unless explicitly implemented by the policy engine.
+
 # Trying it quickly
 
 In order to get a quick proof of concept up and running, you can run the `launch.sh` script or run the following command:
@@ -23,7 +52,7 @@ docker run \
   --pid host \
   -t \
   -v /var/run:/var/run \
-aporeto/trireme-example daemon --hybrid
+aporeto/trireme-example daemon
 
 ```
 
@@ -104,7 +133,7 @@ specify the networks that you want Trireme to apply (by default it will apply to
 In the example below we apply Trireme only on the localhost traffic.
 
 ```bash
-sudo trireme-example daemon --hybrid
+sudo trireme-example daemon
 ```
 
 Start an nginx server as a Linux process (make sure you have the nginx binary available at `/usr/sbin/nginx`, or adapt accordingly) :
@@ -237,7 +266,7 @@ file. Let's see an example of this policy:
                 "Protocol": "icmp"
             }
         ],
-        "TagSelectors": [
+        "Dependencies": [
             {
                 "Clause": [
                     {
@@ -288,12 +317,11 @@ traffic from the container.
 2. `NetworkACLs` describes what traffic should be accepted if the other side
 does not present any network authorization headers. In general this should be
 avoided, but there are specific use cases that someone might want to achieve that.
-3. `TagSelectors` describe the list of authorization policies that have be to
-applied to the attributes of the identity. In the above example, traffic from
-containers that have been identified as "@usr:app=web" or "@usr:env=dev" will
-be accepted. Note here the use of the "@usr" prefix. This indicates that this is
-a tag supplied by the user and can be trusted as long as the user can be trusted.
-On the other hand a "@sys" prefixed tag indicates a tag that the system has
+3. `Dependencies` describe the list of dependencies (i.e. other services)  that this
+application needs to consume.  In the above example, the application
+depends on other services that are identified as "@usr:app=web" or "@usr:env=dev". 
+This indicates that this is a tag supplied by the user and can be trusted as long 
+as the user can be trusted.On the other hand a "@sys" prefixed tag indicates a tag that the system has
 discovered and its generally trusted.
 
 In order to load the policy to Trireme-Example you can need to define the file
@@ -345,4 +373,3 @@ certificates.
 ```bash
 ./create_certs.sh
 ```
-

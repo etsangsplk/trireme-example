@@ -54,14 +54,14 @@
                 "Protocol": "icmp"
             }
         ],
-        "TagSelectors": [
+        "Dependencies": [
             {
                 "Clause": [
                     {
                         "Key": "@usr:app",
                         "Operator": "=",
                         "Value": [
-                            "web"
+                            "db"
                         ]
                     }
                 ],
@@ -71,6 +71,24 @@
                     "ServiceID": ""
                 }
             },
+            {
+                "Clause": [
+                    {
+                        "Key": "@usr:env",
+                        "Operator": "=",
+                        "Value": [
+                            "dev"
+                        ]
+                    }
+                ],
+                "Policy": {
+                    "Action": 1,
+                    "PolicyID": "8",
+                    "ServiceID": ""
+                }
+            }
+        ],
+        "ExposureRules": [
             {
                 "Clause": [
                     {
@@ -104,14 +122,15 @@
         ],
         "NetworkACLs": [
         ],
-        "TagSelectors": [
+        "Dependencies": [],
+        "ExposureRules": [
             {
                 "Clause": [
                     {
                         "Key": "@usr:app",
                         "Operator": "=",
                         "Value": [
-                            "db"
+                            "web"
                         ]
                     }
                 ],
