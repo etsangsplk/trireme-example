@@ -18,7 +18,7 @@ codegen:
 	echo 'const REVISION = "$(REVISION)"' >> $(VERSION_FILE)
 
 build: codegen
-	CGO_ENABLED=1 go build -a -installsuffix cgo
+	glide install; CGO_ENABLED=1 go build -a -installsuffix cgo
 
 install: build
 	  sudo cp trireme-example $(BIN_PATH)/trireme-example

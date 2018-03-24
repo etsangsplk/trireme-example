@@ -136,6 +136,9 @@ func (p *CustomPolicyResolver) HandlePUEvent(ctx context.Context, puID string, e
 		p.triremeNets,
 		[]string{},
 		nil,
+		nil,
+		nil,
+		[]string{},
 	)
 
 	switch event {
