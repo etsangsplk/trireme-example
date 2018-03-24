@@ -27,9 +27,3 @@ import:
   version: ^1.7.1
   subpackages:
   - zapcore
-- package: github.com/sirupsen/logrus
-  version: master
-- package: github.com/Sirupsen/logrus
-  repo: git@github.com:/sirupsen/logrus
-  vcs: git
-  version: master
