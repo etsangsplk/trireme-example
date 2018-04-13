@@ -169,7 +169,7 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 		Use:   "run [OPTIONS] <command> [--] [<params>...]",
 		Short: "Run an application with a Trireme policy",
 		Long:  "Run an application with a Trireme policy",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.MinimumNArgs(0),
 		PreRun: func(cmd *cobra.Command, args []string) {
 			// manage setting of the rest of the configuration manually as we cannot
 			// bind this with viper unfortunately
@@ -191,8 +191,15 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 				config.Arguments["--hostpolicy"] = *fHostpolicy
 			}
 
-			// this works because we enforce a minimum of arguments to the command
-			config.Arguments["<command>"] = args[0]
+			// If it is hostpolicy we don't need args
+			if !*fHostpolicy && len(args) == 0 {
+				zap.L().Error("At least one argument must be provided")
+				os.Exit(1)
+			}
+
+			if len(args) > 0 {
+				config.Arguments["<command>"] = args[0]
+			}
 
 			if len(args) > 1 {
 				// NOTE: cobra removes the first `--` already from args
