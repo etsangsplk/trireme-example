@@ -1,7 +1,7 @@
 package: github.com/aporeto-inc/trireme-example
 import:
 - package: github.com/aporeto-inc/trireme-lib
-  version: ^8.30.0
+  version: v8.30.0
   subpackages:
   - cmd/systemdutil
   - collector
@@ -27,3 +27,7 @@ import:
   version: ^1.7.1
   subpackages:
   - zapcore
+- package: k8s.io/client-go
+  version: ^7.x
+- package: k8s.io/apimachinery
+  version: release-1.10

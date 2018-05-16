@@ -96,6 +96,7 @@ func ProcessDaemon(config *configuration.Configuration) (err error) {
 		monitor.OptionMonitorLinuxProcess(),
 		monitor.OptionCollector(collectorInstance),
 		monitor.OptionMonitorDocker(dockerOptions...),
+		monitor.OptionMonitorUID(),
 	}
 
 	// Initialize the controllers

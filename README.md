@@ -222,6 +222,35 @@ docker service create --network mynet --name client -l app=web tester
 Assuming that your tester container includes some curl capability, you can immediately
 see that the tester can access the nginx server.
 
+## Trying with UID PAM 
+The UID PAM module of Trireme allows the activation of security context around a
+user login. You can also try trireme-example with the UID PAM module of Trireme. 
+Follow the instructions to build the PAM module in https://github.com/aporeto-inc/trireme-lib/plugins/pam/README.md
+and install it in the corresponding directory (usually /lib/x86_64-linux-gnu/security/). The PAM 
+module can be configured to run depending on the method of accessing the system. For sudo instructions,
+you need add the following line your /etc/pam.d/sudo file: 
+
+```
+session required pam_aporeto_uidm.so
+```
+
+By default trireme-example will activate the UID PAM monitor. When you try to sudo as another
+user, the user session will be protected by Trireme. In order to do that, let us assume
+that you create a new user:
+
+```
+sudo adduser gooduser
+```
+
+Then sudo with the gooduser using 
+```
+sudo -i -u gooduser
+```
+
+You will notice that the user context is now protected with Trireme and the user is limited
+on how they can interact with the network. 
+
+
 ## Custom policy
 
 The default operation of the example assumes that the policy will allow containers or
@@ -325,9 +354,15 @@ as the user can be trusted.On the other hand a "@sys" prefixed tag indicates a t
 discovered and its generally trusted.
 
 In order to load the policy to Trireme-Example you can need to define the file
-with the --policy parameter.
+with the --policy parameter. For example, if you use the standard policy.json file 
+distributed with trireme-example you can just use:
 
-# Understanding the simple example.
+```bash 
+sudo ./trireme-example daemon --policy=policy.json 
+```
+
+
+# PKI and PSK Infrastructure
 
 Trireme can be launched with a PresharedKey for authentication (the default mode of this example),
 or can use a Public Key Infrastructure based on certificates. In both those cases, the constructors

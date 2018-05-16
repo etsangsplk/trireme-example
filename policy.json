@@ -104,6 +104,22 @@
                     "PolicyID": "8",
                     "ServiceID": ""
                 }
+            },
+            {
+                "Clause": [
+                    {
+                        "Key": "@usr:user",
+                        "Operator": "=",
+                        "Value": [
+                            "gooduser"
+                        ]
+                    }
+                ],
+                "Policy": {
+                    "Action": 1,
+                    "PolicyID": "9",
+                    "ServiceID": ""
+                }
             }
         ]
     },
@@ -123,6 +139,67 @@
         "NetworkACLs": [
         ],
         "Dependencies": [],
+        "ExposureRules": [
+            {
+                "Clause": [
+                    {
+                        "Key": "@usr:app",
+                        "Operator": "=",
+                        "Value": [
+                            "web"
+                        ]
+                    }
+                ],
+                "Policy": {
+                    "Action": 1,
+                    "PolicyID": "8",
+                    "ServiceID": ""
+                }
+            }
+        ]
+    },
+    "gooduser": {
+        "ApplicationACLs": [
+            {
+                "Address": "0.0.0.0/0",
+                "Policy": {
+                    "Action": 1,
+                    "PolicyID": "4",
+                    "ServiceID": ""
+                },
+                "Port": "53",
+                "Protocol": "udp"
+            },
+            {
+                "Address": "192.168.100.1/32",
+                "Policy": {
+                    "Action": 1,
+                    "PolicyID": "2",
+                    "ServiceID": ""
+                },
+                "Port": "1:65535",
+                "Protocol": "TCP"
+            }
+        ],
+        "NetworkACLs": [],
+        "Dependencies": [
+            {
+                "Clause": [
+                    {
+                        "Key": "@usr:app",
+                        "Operator": "=",
+                        "Value": [
+                            "web"
+                        ]
+                    }
+                ],
+                "Policy": {
+                    "Action": 1,
+                    "PolicyID": "8",
+                    "ServiceID": ""
+                }
+            }
+        ],
         "ExposureRules": [
             {
                 "Clause": [

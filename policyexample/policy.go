@@ -72,7 +72,7 @@ func GetPolicyIndex(runtimeInfo policy.RuntimeReader) (string, error) {
 
 	for _, tag := range tags.GetSlice() {
 		parts := strings.SplitN(tag, "=", 2)
-		if strings.HasPrefix(parts[0], "@usr:PolicyIndex") {
+		if strings.HasPrefix(parts[0], "@usr:PolicyIndex") || strings.HasPrefix(parts[0], "@usr:user") {
 			zap.L().Info("Using policy from file", zap.String("Policy ID", parts[1]))
 			return parts[1], nil
 		}
@@ -110,7 +110,6 @@ func (p *CustomPolicyResolver) HandlePUEvent(ctx context.Context, puID string, e
 
 	puPolicy, ok := p.policies[policyIndex]
 	if !ok {
-		fmt.Println("I didn't find it in the cache ")
 		return fmt.Errorf("No policy found")
 	}
 
