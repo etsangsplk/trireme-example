@@ -171,7 +171,7 @@
                 "Protocol": "udp"
             },
             {
-                "Address": "192.168.100.1/32",
+                "Address": "192.30.253.0/24",
                 "Policy": {
                     "Action": 1,
                     "PolicyID": "2",
@@ -186,10 +186,10 @@
             {
                 "Clause": [
                     {
-                        "Key": "@usr:app",
+                        "Key": "@usr:user",
                         "Operator": "=",
                         "Value": [
-                            "web"
+                            "baduser"
                         ]
                     }
                 ],
@@ -204,10 +204,71 @@
             {
                 "Clause": [
                     {
-                        "Key": "@usr:app",
+                        "Key": "@usr:user",
                         "Operator": "=",
                         "Value": [
-                            "web"
+                            "baduser"
+                        ]
+                    }
+                ],
+                "Policy": {
+                    "Action": 1,
+                    "PolicyID": "8",
+                    "ServiceID": ""
+                }
+            }
+        ]
+    },
+    "baduser": {
+        "ApplicationACLs": [
+            {
+                "Address": "0.0.0.0/0",
+                "Policy": {
+                    "Action": 1,
+                    "PolicyID": "4",
+                    "ServiceID": ""
+                },
+                "Port": "53",
+                "Protocol": "udp"
+            },
+            {
+                "Address": "192.30.253.0/24",
+                "Policy": {
+                    "Action": 1,
+                    "PolicyID": "2",
+                    "ServiceID": ""
+                },
+                "Port": "1:65535",
+                "Protocol": "TCP"
+            }
+        ],
+        "NetworkACLs": [],
+        "Dependencies": [
+            {
+                "Clause": [
+                    {
+                        "Key": "@usr:user",
+                        "Operator": "=",
+                        "Value": [
+                            "gooduser"
+                        ]
+                    }
+                ],
+                "Policy": {
+                    "Action": 1,
+                    "PolicyID": "8",
+                    "ServiceID": ""
+                }
+            }
+        ],
+        "ExposureRules": [
+            {
+                "Clause": [
+                    {
+                        "Key": "@usr:user",
+                        "Operator": "=",
+                        "Value": [
+                            "gooduser"
                         ]
                     }
                 ],
@@ -219,4 +280,6 @@
             }
         ]
     }
+    
+    
 }

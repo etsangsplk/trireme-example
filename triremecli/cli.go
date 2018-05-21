@@ -9,7 +9,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/aporeto-inc/trireme-example/configuration"
-	"github.com/aporeto-inc/trireme-example/extractors"
 	"github.com/aporeto-inc/trireme-example/policyexample"
 	"github.com/aporeto-inc/trireme-example/utils"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/aporeto-inc/trireme-lib/controller"
 	"github.com/aporeto-inc/trireme-lib/controller/pkg/secrets"
 	"github.com/aporeto-inc/trireme-lib/monitor"
+	"github.com/kardianos/osext"
 )
 
 // KillContainerOnError defines if the Container is getting killed if the policy Application resulted in an error
@@ -84,19 +84,22 @@ func ProcessDaemon(config *configuration.Configuration) (err error) {
 	if config.LogLevel == "trace" {
 		controllerOptions = append(controllerOptions, controller.OptionPacketLogs())
 	}
-
-	// Docker options
-	dockerOptions := []monitor.DockerMonitorOption{}
-	if config.SwarmMode {
-		dockerOptions = append(dockerOptions, monitor.SubOptionMonitorDockerExtractor(extractors.SwarmExtractor))
+	cleanerName, err := osext.Executable()
+	if err != nil {
+		zap.L().Error("Could Not find path for cleaner binary",zap.Error(err))
 	}
-
+	// Docker options
+	// dockerOptions := []monitor.DockerMonitorOption{}
+	// if config.SwarmMode {
+	// 	dockerOptions = append(dockerOptions, monitor.SubOptionMonitorDockerExtractor(extractors.SwarmExtractor))
+	// }
+	
 	// Setting up extractor and monitor
 	monitorOptions := []monitor.Options{
-		monitor.OptionMonitorLinuxProcess(),
+		monitor.OptionMonitorLinuxProcess(monitor.SubOptionMonitorLinuxReleasePath(cleanerName)),
 		monitor.OptionCollector(collectorInstance),
-		monitor.OptionMonitorDocker(dockerOptions...),
-		monitor.OptionMonitorUID(),
+	//	monitor.OptionMonitorDocker(dockerOptions...),
+		monitor.OptionMonitorUID(monitor.SubOptionMonitorUIDReleasePath(cleanerName)),
 	}
 
 	// Initialize the controllers

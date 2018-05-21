@@ -52,7 +52,7 @@ func LoadPolicies(file string) map[string]*CachedPolicy {
 	jsonParser := json.NewDecoder(configFile)
 	err = jsonParser.Decode(&config)
 	if err != nil {
-		zap.L().Error("Invalid policies - using default")
+		zap.L().Error("Invalid policies - using default",zap.Error(err))
 	}
 
 	config["default"] = defaultConfig
