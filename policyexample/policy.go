@@ -52,7 +52,7 @@ func LoadPolicies(file string) map[string]*CachedPolicy {
 	jsonParser := json.NewDecoder(configFile)
 	err = jsonParser.Decode(&config)
 	if err != nil {
-		zap.L().Error("Invalid policies - using default",zap.Error(err))
+		zap.L().Error("Invalid policies - using default")
 	}
 
 	config["default"] = defaultConfig
@@ -100,11 +100,14 @@ func (p *CustomPolicyResolver) HandlePUEvent(ctx context.Context, puID string, e
 	zap.L().Info("Resolving policy for container",
 		zap.String("containerID", puID),
 		zap.String("name", runtimeInfo.Name()),
+		zap.String("event", string(event)),
 	)
 
 	policyIndex, err := GetPolicyIndex(runtimeInfo)
 	if err != nil {
-		zap.L().Warn("Cannot find requested policy index - Associating default policy")
+		if event == common.EventStart {
+			zap.L().Warn("Cannot find requested policy index - Associating default policy")
+		}
 		policyIndex = "default"
 	}
 
@@ -114,7 +117,7 @@ func (p *CustomPolicyResolver) HandlePUEvent(ctx context.Context, puID string, e
 	}
 
 	// For the default policy we accept traffic with the same labels
-	if policyIndex == "default" {
+	if policyIndex == "default" && (event == common.EventStart || event == common.EventCreate) {
 		puPolicy.Dependencies = p.createDefaultRules(runtimeInfo)
 		puPolicy.ExposureRules = puPolicy.Dependencies
 	}
