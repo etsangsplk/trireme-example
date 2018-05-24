@@ -1,7 +1,7 @@
 package: github.com/aporeto-inc/trireme-example
 import:
 - package: github.com/aporeto-inc/trireme-lib
-  version: v8.30.0
+  version: rhel_69
   subpackages:
   - cmd/systemdutil
   - collector
@@ -12,6 +12,8 @@ import:
   - monitor
   - policy
   - utils/crypto
+- package: github.com/aporeto-inc/netlink-go
+  version: rhel_69
 - package: github.com/docker/docker
   version: ^17.5.0-ce-rc3
   subpackages:
@@ -29,5 +31,3 @@ import:
   - zapcore
 - package: k8s.io/client-go
   version: ^7.x
-- package: k8s.io/apimachinery
-  version: release-1.10
