@@ -28,7 +28,7 @@ remote_build:
 	rm -rf remotebuilder/cmd/remoteenforcer/remoteenforcer
 
 build: codegen remote_build
-	CGO_ENABLED=1 go build -a -installsuffix cgo
+	dep ensure -v; CGO_ENABLED=1 go build -a -installsuffix cgo
 
 install: build
 	  sudo cp trireme-example $(BIN_PATH)/trireme-example

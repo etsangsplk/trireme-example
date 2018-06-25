@@ -1,9 +1,9 @@
 ##
-## Aporeto
-##
+## Aporeto 
+## 
 [[constraint]]
   name = "github.com/aporeto-inc/trireme-lib"
-  branch = "remote-bin"
+  version = "^8.0.0"
 
 [[override]]
   name = "github.com/bvandewalle/go-ipset"
