@@ -13,6 +13,7 @@ addons:
      packages:
        - libnetfilter-queue-dev
        - iptables
+       - ipset
 
 env:
   global:
@@ -22,18 +23,16 @@ env:
 
 before_install:
   - go get -u gopkg.in/alecthomas/gometalinter.v1
-  - go get -v github.com/Masterminds/glide
+  - go get -u github.com/golang/dep/cmd/dep
   - gometalinter.v1 --install
 
 install:
-  - mkdir -p $GOPATH/src/github.com/docker && cd $GOPATH/src/github.com/docker && git clone https://github.com/docker/docker -b 1.13.x docker && cd -
-  - glide cc
-  - glide install
+  - dep ensure -v
+
 
 script:
   - make build
   - gometalinter.v1 --disable-all --enable=vet --enable=vetshadow --enable=golint --enable=structcheck --enable=aligncheck --enable=deadcode --enable=ineffassign --vendor --enable=goimports --enable=varcheck --enable=interfacer --enable=goconst --enable=gosimple --enable=staticcheck --enable=unused --enable=misspell --deadline=300s ./...
-
 
 after_success:
   - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
