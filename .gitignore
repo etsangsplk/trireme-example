@@ -3,5 +3,8 @@ cnitest/cnitest
 trireme-example
 glide.lock
 Gopkg.lock
+<<<<<<< HEAD
 bindata.go
+=======
+>>>>>>> 09951d5b8c4e1387ecc74ec1f83fb7537bd8f2e1
 vendor
