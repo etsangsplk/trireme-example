@@ -2,4 +2,6 @@ versions/versions.go
 cnitest/cnitest
 trireme-example
 glide.lock
+Gopkg.lock
+bindata.go
 vendor

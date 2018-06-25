@@ -11,6 +11,7 @@ import (
 	"github.com/aporeto-inc/trireme-example/configuration"
 	"github.com/aporeto-inc/trireme-example/extractors"
 	"github.com/aporeto-inc/trireme-example/policyexample"
+	"github.com/aporeto-inc/trireme-example/remotebuilder"
 	"github.com/aporeto-inc/trireme-example/utils"
 
 	"github.com/aporeto-inc/trireme-lib/cmd/systemdutil"
@@ -22,6 +23,12 @@ import (
 
 // KillContainerOnError defines if the Container is getting killed if the policy Application resulted in an error
 const KillContainerOnError = true
+
+// remoteEnforcerTempBuildPath is the location of the remote enforcer binary
+const remoteEnforcerTempBuildPath = "/var/run/aporeto/tmp/bin"
+
+// remoteEnforcerBuildName is the name of the remote enforcer binary
+const remoteEnforcerBuildName = "enforcerd"
 
 // ProcessArgs handles all commands options for trireme
 func ProcessArgs(config *configuration.Configuration) (err error) {
@@ -56,6 +63,9 @@ func ProcessRun(config *configuration.Configuration) (err error) {
 
 // ProcessDaemon is called when trireme-example is called to start the daemon
 func ProcessDaemon(config *configuration.Configuration) (err error) {
+
+	// Remote Enforcer Installer
+	installRemoteEnforcer()
 
 	// Setting up Secret Auth type based on user config.
 	var triremesecret secrets.Secrets
@@ -134,7 +144,25 @@ func ProcessDaemon(config *configuration.Configuration) (err error) {
 	zap.L().Debug("Stop signal received")
 	ctrl.CleanUp()
 	cancel()
+
+	uninstallRemoteEnforcer()
+	zap.L().Debug("Removed remoteenforcer binary")
+
 	zap.L().Info("Everything stopped. Bye Trireme-Example!")
 
 	return nil
+}
+
+func installRemoteEnforcer() {
+
+	if err := remotebuilder.Install(remoteEnforcerTempBuildPath, remoteEnforcerBuildName); err != nil {
+		zap.L().Fatal("Unable to install remoteenforcer binary", zap.Error(err))
+	}
+}
+
+func uninstallRemoteEnforcer() {
+
+	if err := remotebuilder.Uninstall(remoteEnforcerTempBuildPath); err != nil {
+		zap.L().Warn("Unable to uninstall remoteenforcer binary", zap.Error(err))
+	}
 }

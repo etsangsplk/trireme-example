@@ -60,10 +60,6 @@ type Configuration struct {
 	LogFormat string
 	LogLevel  string
 
-	// RemoteEnforcer defines if the enforcer is spawned into each POD namespace
-	// or into the host default namespace.
-	RemoteEnforcer bool
-
 	DockerEnforcement bool
 	// LinuxProcesses defines if we activate//police LinuxProcesses
 	LinuxProcessesEnforcement bool
@@ -103,11 +99,7 @@ const Usage = `trireme-example -h | --help
     [--caCertFile=<caCertFile>]
     [--caKeyFile=<caKeyFile>]
     [--log-level=<log-level>]
-    [--log-level-remote=<log-level>]
     [--log-to-console]
-
-  trireme-example enforce
-    [--log-level=<log-level>]
 
   trireme-example <cgroup>
 `
@@ -117,7 +109,7 @@ const Usage = `trireme-example -h | --help
 // execute once ready to run the program. The arguments are the functions that
 // should get executed once the CLI is started. `setLogs` is called to prepare zap.
 // `banner` is called to print a CLI banner on daemon startup.
-func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configuration) error, setLogs func(logFormat, logLevel string) error, banner func()) *cobra.Command {
+func InitCLI(runFunc, rmFunc, cgroupFunc, daemonFunc func(*Configuration) error, setLogs func(logFormat, logLevel string) error, banner func()) *cobra.Command {
 	var config Configuration
 	config.Arguments = make(map[string]interface{})
 	// if we don't initialize these as booleans, the systemdutil.ExecuteCommandFromArguments()
@@ -139,7 +131,6 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 	viper.SetDefault("ParsedTriremeNetworks", []string{})
 	viper.SetDefault("LogFormat", "json")
 	viper.SetDefault("LogLevel", "info")
-	viper.SetDefault("RemoteEnforcer", true)
 	viper.SetDefault("DockerEnforcement", true)
 	viper.SetDefault("LinuxProcessesEnforcement", false)
 	viper.SetDefault("SwarmMode", false)
@@ -291,40 +282,6 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 	viper.BindPFlag("SwarmMode", cmdDaemon.Flags().Lookup("swarm"))
 	viper.BindPFlag("CustomExtractor", cmdDaemon.Flags().Lookup("extractor"))
 
-	// 4. enforce command
-	var fLogLevelRemote *string
-	cmdEnforce := &cobra.Command{
-		Use:   "enforce",
-		Short: "Starts the Trireme remote enforcer daemon",
-		Long:  "Starts the Trireme remote enforcer daemon - you don't need to call this by yourself",
-		Args:  cobra.NoArgs,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			config.Enforce = true
-
-			// the remote enforcer needs to determine its logging parameters first
-			_, _, config.LogLevel, config.LogFormat = controller.GetLogParameters()
-
-			// we then apply a different log level if this was requested
-			if fLogLevelRemote != nil && len(*fLogLevelRemote) > 0 {
-				config.LogLevel = *fLogLevelRemote
-			}
-
-			// redo the log setup
-			err := setLogs(config.LogFormat, config.LogLevel)
-			if err != nil {
-				return fmt.Errorf("Error setting up logs: %s", err)
-			}
-
-			// print configuration if in debug
-			zap.L().Debug("prepared config", config.Fields()...)
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// execute the actual command
-			return enforceFunc(&config)
-		},
-	}
-
 	// 5. the root command: the main application entrypoint
 	pfVersion := pflag.BoolP("version", "V", false, "Prints version information and exits")
 	rootCmd := &cobra.Command{
@@ -368,12 +325,11 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 			return cgroupFunc(&config)
 		},
 	}
-	rootCmd.AddCommand(cmdRun, cmdRm, cmdDaemon, cmdEnforce)
+	rootCmd.AddCommand(cmdRun, cmdRm, cmdDaemon)
 	rootCmd.PersistentFlags().AddFlag(pflag.Lookup("version"))
 	rootCmd.PersistentFlags().String("log-level", "info", "Log level")
 	rootCmd.PersistentFlags().String("log-format", "info", "Log Format")
-	// TODO: not used at all?
-	fLogLevelRemote = rootCmd.PersistentFlags().String("log-level-remote", "info", "Log level for remote enforcers")
+
 	// TODO: not used at all?
 	rootCmd.PersistentFlags().String("log-id", "", "Log identifier")
 	// TODO: not used at all?
@@ -393,7 +349,6 @@ func InitCLI(runFunc, rmFunc, cgroupFunc, enforceFunc, daemonFunc func(*Configur
 func (c *Configuration) Fields() []zapcore.Field {
 	fields := []zapcore.Field{
 		zap.String("ParsedTriremeNetworks", c.TriremeNetworks),
-		zap.Bool("RemoteEnforcer", c.RemoteEnforcer),
 		zap.Bool("DockerEnforcement", c.DockerEnforcement),
 		zap.Bool("LinuxProcessesEnforcement", c.LinuxProcessesEnforcement),
 		zap.Bool("SwarmMode", c.SwarmMode),

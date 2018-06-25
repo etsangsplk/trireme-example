@@ -110,7 +110,6 @@ func main() {
 		triremecli.ProcessRun,
 		triremecli.ProcessRun,
 		triremecli.ProcessRun,
-		triremecli.ProcessEnforce,
 		triremecli.ProcessDaemon,
 		setLogs,
 		func() {
