@@ -92,7 +92,7 @@ func main() {
 
 	if cfg.Enforce {
 		_, _, cfg.LogLevel, cfg.LogFormat = controller.GetLogParameters()
-		fmt.Println(cfg.LogLevel, cfg.LogFormat)
+
 		err := setLogs(cfg.LogFormat, cfg.LogLevel)
 		if err != nil {
 			zap.L().Error("Error setting up logs", zap.Error(err))
