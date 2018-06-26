@@ -33,10 +33,6 @@ const remoteEnforcerBuildName = "enforcerd"
 // ProcessArgs handles all commands options for trireme
 func ProcessArgs(config *configuration.Configuration) (err error) {
 
-	if config.Enforce {
-		return ProcessEnforce(config)
-	}
-
 	if config.Run {
 		// Execute a command or process a cgroup cleanup and exit
 		return ProcessRun(config)
@@ -44,15 +40,6 @@ func ProcessArgs(config *configuration.Configuration) (err error) {
 
 	// Trireme Daemon Commands
 	return ProcessDaemon(config)
-}
-
-// ProcessEnforce is called if the application is run as remote enforcer
-func ProcessEnforce(config *configuration.Configuration) (err error) {
-	// Run enforcer and exit
-	if err := controller.LaunchRemoteEnforcer(nil); err != nil {
-		zap.L().Fatal("Unable to start enforcer", zap.Error(err))
-	}
-	return nil
 }
 
 // ProcessRun is called when the application is either adding or removing
