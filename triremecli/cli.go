@@ -28,7 +28,7 @@ const KillContainerOnError = true
 const remoteEnforcerTempBuildPath = "/var/run/aporeto/tmp/bin"
 
 // remoteEnforcerBuildName is the name of the remote enforcer binary
-const remoteEnforcerBuildName = "enforcerd"
+const remoteEnforcerBuildName = "remoteenforcerd"
 
 // ProcessArgs handles all commands options for trireme
 func ProcessArgs(config *configuration.Configuration) (err error) {

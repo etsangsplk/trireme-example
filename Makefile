@@ -19,7 +19,6 @@ codegen:
 
 remote_build:
 	cd remotebuilder/cmd/remoteenforcer && go build -ldflags -s -ldflags -w
-	pwd
 	cd ../../../
 	go-bindata -pkg remoteenforcer remotebuilder/cmd/remoteenforcer/remoteenforcer
 	rm -rf static/remoteenforcer
