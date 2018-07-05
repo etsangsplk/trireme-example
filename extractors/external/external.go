@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aporeto-inc/trireme-lib/common"
-	"github.com/aporeto-inc/trireme-lib/policy"
 	"github.com/docker/docker/api/types"
+	"go.aporeto.io/trireme-lib/common"
+	"go.aporeto.io/trireme-lib/policy"
 )
 
 /*
 
 Standard example of an external docker metadata extractor.
 INPUT as arg[1]: The docker Container JSON with all the related information as defined in github.com/docker/docker/api/types
-OUTPUT on STDPUT: The JSON representation (marshalled) of the PURuntime as defined in github.com/aporeto-inc/trireme-lib/policy
+OUTPUT on STDPUT: The JSON representation (marshalled) of the PURuntime as defined in go.aporeto.io/trireme-lib/policy
 
 */
 

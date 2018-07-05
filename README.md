@@ -225,7 +225,7 @@ see that the tester can access the nginx server.
 ## Trying with UID PAM 
 The UID PAM module of Trireme allows the activation of security context around a
 user login. You can also try trireme-example with the UID PAM module of Trireme. 
-Follow the instructions to build the PAM module in https://github.com/aporeto-inc/trireme-lib/plugins/pam/README.md
+Follow the instructions to build the PAM module in https://go.aporeto.io/trireme-lib/plugins/pam/README.md
 and install it in the corresponding directory (usually /lib/x86_64-linux-gnu/security/). The PAM 
 module can be configured to run depending on the method of accessing the system. For sudo instructions,
 you need add the following line your /etc/pam.d/sudo file: 

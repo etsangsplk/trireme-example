@@ -13,11 +13,11 @@ import (
 	"github.com/aporeto-inc/trireme-example/policyexample"
 	"github.com/aporeto-inc/trireme-example/utils"
 
-	"github.com/aporeto-inc/trireme-lib/cmd/systemdutil"
-	"github.com/aporeto-inc/trireme-lib/collector"
-	"github.com/aporeto-inc/trireme-lib/controller"
-	"github.com/aporeto-inc/trireme-lib/controller/pkg/secrets"
-	"github.com/aporeto-inc/trireme-lib/monitor"
+	"go.aporeto.io/trireme-lib/cmd/systemdutil"
+	"go.aporeto.io/trireme-lib/collector"
+	"go.aporeto.io/trireme-lib/controller"
+	"go.aporeto.io/trireme-lib/controller/pkg/secrets"
+	"go.aporeto.io/trireme-lib/monitor"
 )
 
 // KillContainerOnError defines if the Container is getting killed if the policy Application resulted in an error

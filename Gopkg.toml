@@ -1,20 +1,23 @@
-##
-## Aporeto 
-## 
+required = [
+  "go.aporeto.io/trireme-lib/plugins/pam",
+  "github.com/docker/distribution"
+]
+
 [[constraint]]
-  name = "github.com/aporeto-inc/trireme-lib"
-  version = "^8.0.0"
+  name = "go.aporeto.io/trireme-lib"
+  version = "^9.0.0"
+
+[[constraint]]
+  name = "github.com/docker/docker"
+  version = "v17.05.0-ce-rc3"
+
+[[constraint]]
+  name = "github.com/docker/distribution"
+  revision = "b38e5838b7b2f2ad48e06ec4b500011976080621"
 
 [[override]]
   name = "github.com/bvandewalle/go-ipset"
   revision = "0ee897a6d8bc6095299e9c03293ece091ef871de"
-
-##
-## 3rd Party
-##
-[[constraint]]
-  name = "github.com/docker/docker"
-  version = "1.13.1"
 
 [[constraint]]
   name = "go.uber.org/zap"

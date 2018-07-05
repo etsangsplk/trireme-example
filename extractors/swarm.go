@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aporeto-inc/trireme-lib/common"
-	"github.com/aporeto-inc/trireme-lib/policy"
 	"github.com/docker/docker/api/types"
+	"go.aporeto.io/trireme-lib/common"
+	"go.aporeto.io/trireme-lib/policy"
 
 	dockerClient "github.com/docker/docker/client"
 )
@@ -29,7 +29,7 @@ func SwarmExtractor(info *types.ContainerJSON) (*policy.PURuntime, error) {
 
 		serviceID := info.Config.Labels["com.docker.swarm.service.id"]
 
-		service, _, err := cli.ServiceInspectWithRaw(context.Background(), serviceID)
+		service, _, err := cli.ServiceInspectWithRaw(context.Background(), serviceID, types.ServiceInspectOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("Failed get swarm labels: %s", err)
 		}

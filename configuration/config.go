@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/aporeto-inc/trireme-example/versions"
-	"github.com/aporeto-inc/trireme-lib/controller"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"go.aporeto.io/trireme-lib/controller"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
