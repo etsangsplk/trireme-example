@@ -8,6 +8,8 @@ DOCKER_IMAGE_NAME?=$(PROJECT_NAME)
 DOCKER_IMAGE_TAG?=$(BUILD_NUMBER)
 BIN_PATH := /usr/local/bin
 
+ci:
+
 codegen:
 	echo 'package versions' > $(VERSION_FILE)
 	echo '' >> $(VERSION_FILE)
