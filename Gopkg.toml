@@ -4,8 +4,8 @@ required = [
 ]
 
 [[constraint]]
+  branch = "release-3.3.0"
   name = "go.aporeto.io/trireme-lib"
-  version = "^9.0.0"
 
 [[constraint]]
   name = "github.com/docker/docker"
